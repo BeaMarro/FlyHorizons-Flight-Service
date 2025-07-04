@@ -30,7 +30,7 @@ This microservice provides all core functionality related to **flight management
 - 📇 **Filter flights using relevant data**
 - ⚠️ **Centralized error handling**
 
---
+---
 
 ## 📄 License
 This project is shared for educational and portfolio purposes only. Commercial use, redistribution, or modification is not allowed without explicit written permission. All rights reserved © 2025 Beatrice Marro.
