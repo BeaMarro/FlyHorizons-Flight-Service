@@ -1,0 +1,996 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>flyhorizons-flightservice: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">flyhorizons-flightservice/main.go (0.0%)</option>
+				
+				<option value="file1">flyhorizons-flightservice/repositories/base_repository.go (6.7%)</option>
+				
+				<option value="file2">flyhorizons-flightservice/repositories/entity/flight_entity.go (0.0%)</option>
+				
+				<option value="file3">flyhorizons-flightservice/repositories/flight_repository.go (100.0%)</option>
+				
+				<option value="file4">flyhorizons-flightservice/routes/flight_filter_router.go (84.8%)</option>
+				
+				<option value="file5">flyhorizons-flightservice/routes/flight_router.go (80.9%)</option>
+				
+				<option value="file6">flyhorizons-flightservice/services/authentication/gateway_auth_middleware.go (0.0%)</option>
+				
+				<option value="file7">flyhorizons-flightservice/services/converter/flight_converter.go (75.0%)</option>
+				
+				<option value="file8">flyhorizons-flightservice/services/errors/flight_exists_error.go (0.0%)</option>
+				
+				<option value="file9">flyhorizons-flightservice/services/errors/flight_not_found_error.go (0.0%)</option>
+				
+				<option value="file10">flyhorizons-flightservice/services/flight_filter_service.go (100.0%)</option>
+				
+				<option value="file11">flyhorizons-flightservice/services/flight_service.go (100.0%)</option>
+				
+				<option value="file12">flyhorizons-flightservice/services/sort_strategies/arrival_airport_strategy.go (0.0%)</option>
+				
+				<option value="file13">flyhorizons-flightservice/services/sort_strategies/date_range_startegy.go (0.0%)</option>
+				
+				<option value="file14">flyhorizons-flightservice/services/sort_strategies/departure_airport_strategy.go (0.0%)</option>
+				
+				<option value="file15">flyhorizons-flightservice/utils/weekday_utils.go (71.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package main
+
+import (
+        "flyhorizons-flightservice/repositories"
+        "flyhorizons-flightservice/routes"
+        "flyhorizons-flightservice/services"
+        "flyhorizons-flightservice/services/authentication"
+        "flyhorizons-flightservice/services/converter"
+
+        "github.com/gin-gonic/gin"
+)
+
+func main() <span class="cov0" title="0">{
+        router := gin.Default()
+        // Initialize flight repository and service
+        baseRepo := repositories.BaseRepository{}
+        flightRepo := repositories.NewFlightRepository(&amp;baseRepo)
+        flightConverter := converter.FlightConverter{}
+        // Authentication middlware
+        gatewayAuthMiddleware := authentication.NewGatewayAuthMiddleware()
+        flightService := services.NewFlightService(flightRepo, flightConverter)
+        // Define all applicable routes
+        routes.RegisterFlightRoutes(router, flightService, gatewayAuthMiddleware)
+        routes.RegisterFilterFlightRoutes(router, flightService)
+        // Run the microservice
+        router.Run(":8080")
+}</span>
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package repositories
+
+import (
+        "database/sql"
+        "fmt"
+        "log"
+        "os"
+
+        "github.com/joho/godotenv"
+        _ "github.com/microsoft/go-mssqldb"
+        "gorm.io/driver/sqlserver"
+        "gorm.io/gorm"
+)
+
+type BaseRepository struct {
+        DB *gorm.DB
+}
+
+func LoadDBConfig() string <span class="cov0" title="0">{
+        // Load environment variables from .env file (optional)
+        if err := godotenv.Load(); err != nil </span><span class="cov0" title="0">{
+                log.Println("No .env file found, relying on environment variables")
+        }</span>
+
+        // Get environment variables
+        <span class="cov0" title="0">server := os.Getenv("DB_SERVER")
+        port := os.Getenv("DB_PORT")
+        user := os.Getenv("DB_USER")
+        password := os.Getenv("DB_PASSWORD")
+        database := os.Getenv("DB_DATABASE")
+
+        // Check if all required variables are set
+        if server == "" || port == "" || user == "" || password == "" || database == "" </span><span class="cov0" title="0">{
+                return "" // Return empty string if variables are missing
+        }</span>
+
+        // Build and return the connection string
+        <span class="cov0" title="0">connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%s;database=%s;",
+                server, user, password, port, database)
+        return connString</span>
+}
+
+func (dal *BaseRepository) CreateConnection() (*gorm.DB, error) <span class="cov8" title="1">{
+        // If the DB is already initialized, return it
+        if dal.DB != nil </span><span class="cov8" title="1">{
+                return dal.DB, nil
+        }</span>
+
+        // Load the database connection string
+        <span class="cov0" title="0">connString := LoadDBConfig()
+        if connString == "" </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to load database configuration: environment variables missing")
+        }</span>
+
+        // Connect to the database
+        <span class="cov0" title="0">sqlDB, err := sql.Open("sqlserver", connString)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("error creating connection pool: %w", err)
+        }</span>
+
+        // Ensure we can connect by pinging the database
+        <span class="cov0" title="0">err = sqlDB.Ping()
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("error pinging the database: %w", err)
+        }</span>
+
+        // Initialize GORM with the *sql.DB connection
+        <span class="cov0" title="0">db, err := gorm.Open(sqlserver.New(sqlserver.Config{
+                Conn: sqlDB,
+        }), &amp;gorm.Config{})
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("error initializing GORM: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">dal.DB = db
+        return dal.DB, nil</span>
+}
+
+func (dal *BaseRepository) CloseConnection() <span class="cov0" title="0">{
+        if dal.DB != nil </span><span class="cov0" title="0">{
+                sqlDB, _ := dal.DB.DB()
+                sqlDB.Close()
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package entities
+
+import (
+        "time"
+)
+
+type FlightEntity struct {
+        FlightCode        string    `gorm:"column:FlightCode;primaryKey"`
+        Departure         string    `gorm:"column:Departure"`
+        Arrival           string    `gorm:"column:Arrival"`
+        DurationInMinutes int       `gorm:"column:DurationInMinutes"`
+        DepartureTime     time.Time `gorm:"column:DepartureTime"`
+        DepartureDays     string    `gorm:"column:DepartureDays;type:string"` // JSON list of integers (string)
+        BasePrice         float32   `gorm:"column:BasePrice"`
+        CreatedAt         time.Time `gorm:"column:CreatedAt"`
+}
+
+// Override the default table name
+func (FlightEntity) TableName() string <span class="cov0" title="0">{
+        return "Flight"
+}</span>
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package repositories
+
+import (
+        entities "flyhorizons-flightservice/repositories/entity"
+        "flyhorizons-flightservice/services/interfaces"
+)
+
+type FlightRepository struct {
+        *BaseRepository
+}
+
+var _ interfaces.FlightRepository = (*FlightRepository)(nil)
+
+func NewFlightRepository(baseRepo *BaseRepository) *FlightRepository <span class="cov8" title="1">{
+        return &amp;FlightRepository{
+                BaseRepository: baseRepo,
+        }
+}</span>
+
+func (repo *FlightRepository) GetAll() []entities.FlightEntity <span class="cov8" title="1">{
+        db, _ := repo.CreateConnection()
+
+        var flights []entities.FlightEntity
+        db.Find(&amp;flights)
+
+        return flights
+}</span>
+
+func (repo *FlightRepository) GetByFlightCode(flightCode string) entities.FlightEntity <span class="cov8" title="1">{
+        db, _ := repo.CreateConnection()
+
+        var flight entities.FlightEntity
+        db.Where("FlightCode = ?", flightCode).First(&amp;flight)
+
+        return flight
+}</span>
+
+func (repo *FlightRepository) Create(flightEntity entities.FlightEntity) entities.FlightEntity <span class="cov8" title="1">{
+        db, _ := repo.CreateConnection()
+
+        db.Create(&amp;flightEntity)
+
+        return flightEntity
+}</span>
+
+func (repo *FlightRepository) DeleteByFlightCode(flightCode string) bool <span class="cov8" title="1">{
+        db, _ := repo.CreateConnection()
+
+        result := db.Where("FlightCode = ?", flightCode).Delete(&amp;entities.FlightEntity{})
+
+        if result.Error != nil || result.RowsAffected == 0 </span><span class="cov8" title="1">{
+                return false
+        }</span>
+
+        <span class="cov8" title="1">return true</span>
+}
+
+func (repo *FlightRepository) Update(flightEntity entities.FlightEntity) entities.FlightEntity <span class="cov8" title="1">{
+        db, _ := repo.CreateConnection()
+
+        db.Save(&amp;flightEntity)
+
+        return flightEntity
+}</span>
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package routes
+
+import (
+        "flyhorizons-flightservice/services"
+        "flyhorizons-flightservice/services/interfaces"
+        strategies "flyhorizons-flightservice/services/sort_strategies"
+        "net/http"
+        "time"
+
+        "github.com/gin-gonic/gin"
+)
+
+// Handles the flight filtering functionality
+func RegisterFilterFlightRoutes(router *gin.Engine, flightService interfaces.FlightService) <span class="cov8" title="1">{
+        router.GET("/flights/filter", func(ctx *gin.Context) </span><span class="cov8" title="1">{
+                var departureAirport *string
+                var arrivalAirport *string
+
+                // Extracting the query parameters (if present)
+                if departure := ctx.DefaultQuery("departureAirport", ""); departure != "" </span><span class="cov8" title="1">{
+                        departureAirport = &amp;departure
+                }</span>
+
+                <span class="cov8" title="1">if arrival := ctx.DefaultQuery("arrivalAirport", ""); arrival != "" </span><span class="cov8" title="1">{
+                        arrivalAirport = &amp;arrival
+                }</span>
+
+                <span class="cov8" title="1">departureDateStr := ctx.DefaultQuery("departureDate", "")
+                returnDateStr := ctx.DefaultQuery("returnDate", "")
+
+                var departureDate, returnDate *time.Time
+
+                // Parse departure and return dates as datetime objects
+                if departureDateStr != "" </span><span class="cov8" title="1">{
+                        parsedDepartureDate, err := time.Parse("2006-01-02", departureDateStr)
+                        if err == nil </span><span class="cov0" title="0">{
+                                departureDate = &amp;parsedDepartureDate
+                        }</span>
+                }
+
+                <span class="cov8" title="1">if returnDateStr != "" </span><span class="cov8" title="1">{
+                        parsedReturnDate, err := time.Parse("2006-01-02", returnDateStr)
+                        if err == nil </span><span class="cov0" title="0">{
+                                returnDate = &amp;parsedReturnDate
+                        }</span>
+                }
+
+                <span class="cov8" title="1">flightFilterService := services.FlightFilterService{}
+
+                // Add strategies based on query parameters
+                if arrivalAirport != nil </span><span class="cov8" title="1">{
+                        arrivalStrategy := strategies.ArrivalAirportStrategy{}
+                        flightFilterService.AddStrategy(arrivalStrategy)
+                }</span>
+                <span class="cov8" title="1">if departureAirport != nil </span><span class="cov8" title="1">{
+                        departureStrategy := strategies.DepartureAirportStrategy{}
+                        flightFilterService.AddStrategy(departureStrategy)
+                }</span>
+                <span class="cov8" title="1">if departureDate != nil || returnDate != nil </span><span class="cov0" title="0">{
+                        dateStrategy := strategies.DateRangeStrategy{}
+                        flightFilterService.AddStrategy(dateStrategy)
+                }</span>
+
+                // Get all flights from the flightService
+                <span class="cov8" title="1">flights := flightService.GetAll()
+
+                // Filter the flights using the filter service and the query parameters (if applicable)
+                filteredFlights := flightFilterService.Filter(flights, departureAirport, arrivalAirport, departureDate, returnDate)
+
+                if len(filteredFlights) &gt; 0 </span><span class="cov8" title="1">{
+                        ctx.JSON(http.StatusOK, filteredFlights)
+                }</span> else<span class="cov0" title="0"> {
+                        ctx.JSON(http.StatusNotFound, gin.H{"message": "No flights found matching the criteria"})
+                }</span>
+        })
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package routes
+
+import (
+        "flyhorizons-flightservice/models"
+        "flyhorizons-flightservice/services/errors"
+        "flyhorizons-flightservice/services/interfaces"
+        "fmt"
+        "net/http"
+
+        "github.com/gin-gonic/gin"
+)
+
+// Handles the flight CRUD functionality
+func RegisterFlightRoutes(router *gin.Engine, flightService interfaces.FlightService, authMiddleware interfaces.GatewayAuthMiddleware) <span class="cov8" title="1">{
+        // Public routes
+        router.GET("/flights", func(ctx *gin.Context) </span><span class="cov8" title="1">{
+                flights := flightService.GetAll()
+                ctx.JSON(http.StatusOK, flights)
+        }</span>)
+
+        <span class="cov8" title="1">router.GET("flights/:flightCode", func(ctx *gin.Context) </span><span class="cov8" title="1">{
+                flightCode := ctx.Param("flightCode")
+
+                flight, err := flightService.GetByFlightCode(flightCode)
+
+                if err != nil </span><span class="cov8" title="1">{
+                        if _, ok := err.(*errors.FlightNotFoundError); ok </span><span class="cov8" title="1">{
+                                ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()}) // 404 Not Found
+                                return
+                        }</span>
+                        <span class="cov0" title="0">ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+                        return</span>
+                }
+                <span class="cov8" title="1">ctx.JSON(http.StatusOK, flight)</span>
+        })
+
+        <span class="cov8" title="1">flightGroup := router.Group("/flights")
+        flightGroup.Use(authMiddleware.GatewayAuthMiddleware())
+
+        // Protected routes
+        // Only accessible by admins
+        flightGroup.POST("/", func(ctx *gin.Context) </span><span class="cov8" title="1">{
+                role, exists := ctx.Get("role")
+                fmt.Println("Loggedin role: ", role)
+
+                if !exists || role != "admin" </span><span class="cov8" title="1">{
+                        ctx.JSON(http.StatusForbidden, gin.H{"error": "unauthorized: admin access required"})
+                        return
+                }</span>
+
+                // Create a Flight object
+                <span class="cov8" title="1">var flight models.Flight
+                // Convert the JSON to a Flight object
+                if err := ctx.ShouldBindJSON(&amp;flight); err != nil </span><span class="cov0" title="0">{
+                        ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+                        return
+                }</span>
+
+                <span class="cov8" title="1">postFlight, err := flightService.Create(flight)
+                if err != nil </span><span class="cov8" title="1">{
+                        // 409 Conflict
+                        if _, ok := err.(*errors.FlightExistsError); ok </span><span class="cov8" title="1">{
+                                ctx.JSON(http.StatusConflict, gin.H{"message": err.Error()})
+                                return
+                        }</span>
+                        // 500 Internal Server Error
+                        <span class="cov0" title="0">ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+                        return</span>
+                }
+                <span class="cov8" title="1">ctx.JSON(http.StatusCreated, postFlight)</span> // 201 Created
+        })
+
+        <span class="cov8" title="1">flightGroup.DELETE("/:flightCode", func(ctx *gin.Context) </span><span class="cov8" title="1">{
+                role, exists := ctx.Get("role")
+                fmt.Println("Loggedin role: ", role)
+
+                if !exists || role != "admin" </span><span class="cov8" title="1">{
+                        ctx.JSON(http.StatusForbidden, gin.H{"error": "unauthorized: admin access required"})
+                        return
+                }</span>
+
+                <span class="cov8" title="1">flightCode := ctx.Param("flightCode")
+
+                success, err := flightService.DeleteByFlightCode(flightCode)
+                if err != nil </span><span class="cov8" title="1">{
+                        if _, ok := err.(*errors.FlightNotFoundError); ok </span><span class="cov8" title="1">{
+                                ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()}) // 404 Not Found
+                                return
+                        }</span>
+                        <span class="cov0" title="0">ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+                        return</span>
+                }
+                // Uses success to confirm the deletion
+                <span class="cov8" title="1">if success </span><span class="cov8" title="1">{
+                        ctx.JSON(http.StatusOK, gin.H{
+                                "message": "Flight deleted successfully",
+                        })
+                }</span> else<span class="cov0" title="0"> {
+                        ctx.JSON(http.StatusInternalServerError, gin.H{
+                                "message": "Failed to delete flight, but no error has occurred",
+                        })
+                }</span>
+        })
+
+        <span class="cov8" title="1">flightGroup.PUT("/", func(ctx *gin.Context) </span><span class="cov8" title="1">{
+                role, exists := ctx.Get("role")
+                fmt.Println("Loggedin role: ", role)
+
+                if !exists || role != "admin" </span><span class="cov8" title="1">{
+                        ctx.JSON(http.StatusForbidden, gin.H{"error": "unauthorized: admin access required"})
+                        return
+                }</span>
+
+                <span class="cov8" title="1">var flight models.Flight
+                // Convert the JSON to a Flight object
+                if err := ctx.ShouldBindJSON(&amp;flight); err != nil </span><span class="cov0" title="0">{
+                        ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+                        return
+                }</span>
+                <span class="cov8" title="1">put_flight, err := flightService.Update(flight)
+                if err != nil </span><span class="cov8" title="1">{
+                        if _, ok := err.(*errors.FlightNotFoundError); ok </span><span class="cov8" title="1">{
+                                ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()}) // 404 Not Found
+                                return
+                        }</span>
+                        <span class="cov0" title="0">ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+                        return</span>
+                }
+                <span class="cov8" title="1">ctx.JSON(http.StatusOK, put_flight)</span>
+        })
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package authentication
+
+import (
+        "fmt"
+        "net/http"
+        "os"
+        "strings"
+
+        "github.com/gin-gonic/gin"
+        "github.com/golang-jwt/jwt/v4"
+        "github.com/joho/godotenv"
+)
+
+type GatewayAuthMiddlewareHandler struct{}
+
+func (g *GatewayAuthMiddlewareHandler) GatewayAuthMiddleware() gin.HandlerFunc <span class="cov0" title="0">{
+        return func(c *gin.Context) </span><span class="cov0" title="0">{
+                // Load .env file
+                err := godotenv.Load()
+                if err != nil </span><span class="cov0" title="0">{
+                        fmt.Println("Error loading .env file")
+                }</span>
+
+                <span class="cov0" title="0">JwtSecret := []byte(os.Getenv("JWT_SECRET"))
+
+                // Get JWT token from Authorization header
+                authHeader := c.GetHeader("Authorization")
+
+                if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") </span><span class="cov0" title="0">{
+                        c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing or invalid Authorization header"})
+                        return
+                }</span>
+
+                <span class="cov0" title="0">tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+
+                // Parse the JWT token
+                token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) </span><span class="cov0" title="0">{
+                        if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok </span><span class="cov0" title="0">{
+                                return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+                        }</span>
+                        <span class="cov0" title="0">return JwtSecret, nil</span>
+                })
+
+                <span class="cov0" title="0">if err != nil || !token.Valid </span><span class="cov0" title="0">{
+                        fmt.Println("JWT parsing failed:", err)
+                        c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid JWT token"})
+                        return
+                }</span>
+
+                // Extract claims
+                <span class="cov0" title="0">claims, ok := token.Claims.(jwt.MapClaims)
+                if !ok </span><span class="cov0" title="0">{
+                        c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid JWT claims"})
+                        return
+                }</span>
+
+                <span class="cov0" title="0">fmt.Println("--- Extracted JWT Claims ---")
+                for k, v := range claims </span><span class="cov0" title="0">{
+                        fmt.Printf("%s: %v\n", k, v)
+                }</span>
+
+                // Set claims
+                <span class="cov0" title="0">if sub, ok := claims["sub"].(float64); ok </span><span class="cov0" title="0">{
+                        c.Set("user_id", int(sub))
+                        c.Set("sub", int(sub))
+                }</span>
+                <span class="cov0" title="0">if role, ok := claims["role"].(string); ok </span><span class="cov0" title="0">{
+                        c.Set("role", role)
+                }</span>
+                <span class="cov0" title="0">if email, ok := claims["email"].(string); ok </span><span class="cov0" title="0">{
+                        c.Set("email", email)
+                }</span>
+
+                <span class="cov0" title="0">c.Next()</span>
+        }
+}
+
+func NewGatewayAuthMiddleware() *GatewayAuthMiddlewareHandler <span class="cov0" title="0">{
+        return &amp;GatewayAuthMiddlewareHandler{}
+}</span>
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package converter
+
+import (
+        "flyhorizons-flightservice/models"
+        "flyhorizons-flightservice/models/enums"
+        entities "flyhorizons-flightservice/repositories/entity"
+        "flyhorizons-flightservice/utils"
+        "time"
+)
+
+type FlightConverter struct {
+        WeekdayUtils utils.WeekdayUtils
+}
+
+func (flightConverter *FlightConverter) ConvertFlightEntityToFlight(entity entities.FlightEntity) models.Flight <span class="cov8" title="1">{
+        // Convert JSON string to []enums.Day
+        departureDays, err := flightConverter.WeekdayUtils.ConvertJSONToDays(entity.DepartureDays)
+        if err != nil </span><span class="cov0" title="0">{
+                departureDays = []enums.Day{}
+        }</span>
+
+        <span class="cov8" title="1">return models.Flight{
+                FlightCode:        entity.FlightCode,
+                Departure:         entity.Departure,
+                Arrival:           entity.Arrival,
+                DurationInMinutes: entity.DurationInMinutes,
+                DepartureTime:     entity.DepartureTime,
+                DepartureDays:     departureDays,
+                BasePrice:         entity.BasePrice,
+        }</span>
+}
+
+func (flightConverter *FlightConverter) ConvertFlightToFlightEntity(flight models.Flight) entities.FlightEntity <span class="cov8" title="1">{
+        // Convert []enums.Day to JSON string
+        departureDaysJSON, err := flightConverter.WeekdayUtils.ConvertDaysToJSON(flight.DepartureDays)
+        if err != nil </span><span class="cov0" title="0">{
+                departureDaysJSON = "[]"
+        }</span>
+
+        <span class="cov8" title="1">return entities.FlightEntity{
+                FlightCode:        flight.FlightCode,
+                Departure:         flight.Departure,
+                Arrival:           flight.Arrival,
+                DurationInMinutes: flight.DurationInMinutes,
+                DepartureTime:     flight.DepartureTime,
+                DepartureDays:     departureDaysJSON,
+                BasePrice:         flight.BasePrice,
+                // Set current time for record creation/update
+                CreatedAt: time.Now(),
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package errors
+
+import "fmt"
+
+type FlightExistsError struct {
+        FlightCode string
+}
+
+func (e *FlightExistsError) Error() string <span class="cov0" title="0">{
+        return fmt.Sprintf("Flight with the code %s already exists", e.FlightCode)
+}</span>
+
+func NewFlightExistsError(flightCode string, errorCode int) *FlightExistsError <span class="cov0" title="0">{
+        return &amp;FlightExistsError{FlightCode: flightCode}
+}</span>
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package errors
+
+import "fmt"
+
+type FlightNotFoundError struct {
+        FlightCode string
+}
+
+func (e *FlightNotFoundError) Error() string <span class="cov0" title="0">{
+        return fmt.Sprintf("Flight with the code %s was not found", e.FlightCode)
+}</span>
+
+func NewFlightNotFoundError(flightCode string, errorCode int) *FlightNotFoundError <span class="cov0" title="0">{
+        return &amp;FlightNotFoundError{FlightCode: flightCode}
+}</span>
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package services
+
+import (
+        "flyhorizons-flightservice/models"
+        "time"
+)
+
+type FlightFilterService struct {
+        Strategies []FilterStrategy
+}
+
+func (service *FlightFilterService) AddStrategy(strategy FilterStrategy) <span class="cov8" title="1">{
+        service.Strategies = append(service.Strategies, strategy)
+}</span>
+
+func (service *FlightFilterService) Filter(flights []models.Flight, departureAirport *string, arrivalAirport *string, departureDate *time.Time, returnDate *time.Time) []models.Flight <span class="cov8" title="1">{
+        // Applies strategies in a sequence
+        for _, strategy := range service.Strategies </span><span class="cov8" title="1">{
+                flights = strategy.Filter(flights, departureAirport, arrivalAirport, departureDate, returnDate)
+        }</span>
+        <span class="cov8" title="1">return flights</span>
+}
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">package services
+
+import (
+        "flyhorizons-flightservice/models"
+        "flyhorizons-flightservice/services/converter"
+        "flyhorizons-flightservice/services/errors"
+        "flyhorizons-flightservice/services/interfaces"
+)
+
+type FlightService struct {
+        flightRepo      interfaces.FlightRepository
+        flightConverter converter.FlightConverter
+}
+
+func NewFlightService(repo interfaces.FlightRepository, flightConverter converter.FlightConverter) *FlightService <span class="cov8" title="1">{
+        return &amp;FlightService{
+                flightRepo:      repo,
+                flightConverter: flightConverter,
+        }
+}</span>
+
+func (flightService *FlightService) GetAll() []models.Flight <span class="cov8" title="1">{
+        flightEntities := flightService.flightRepo.GetAll()
+
+        var flights []models.Flight
+        for _, flightEntity := range flightEntities </span><span class="cov8" title="1">{
+                flight := flightService.flightConverter.ConvertFlightEntityToFlight(flightEntity)
+                flights = append(flights, flight)
+        }</span>
+
+        <span class="cov8" title="1">return flights</span>
+}
+
+func (flightService *FlightService) GetByFlightCode(flightCode string) (*models.Flight, error) <span class="cov8" title="1">{
+        flightEntity := flightService.flightRepo.GetByFlightCode(flightCode)
+        // Flight is not found
+        if flightEntity.FlightCode == "" </span><span class="cov8" title="1">{
+                return nil, errors.NewFlightNotFoundError(flightCode, 404)
+        }</span>
+
+        // Flight is found
+        <span class="cov8" title="1">flight := flightService.flightConverter.ConvertFlightEntityToFlight(flightEntity)
+        return &amp;flight, nil</span>
+}
+
+func (FlightService *FlightService) FlightExists(flightCode string) bool <span class="cov8" title="1">{
+        for _, flight := range FlightService.GetAll() </span><span class="cov8" title="1">{
+                if flight.FlightCode == flightCode </span><span class="cov8" title="1">{
+                        return true
+                }</span>
+        }
+        <span class="cov8" title="1">return false</span>
+}
+
+func (flightService *FlightService) Create(flight models.Flight) (*models.Flight, error) <span class="cov8" title="1">{
+        if flightService.FlightExists(flight.FlightCode) </span><span class="cov8" title="1">{
+                return nil, errors.NewFlightExistsError(flight.FlightCode, 409)
+        }</span>
+
+        <span class="cov8" title="1">var flightEntity = flightService.flightConverter.ConvertFlightToFlightEntity(flight)
+        var postflightEntity = flightService.flightRepo.Create(flightEntity)
+        var postFlight = flightService.flightConverter.ConvertFlightEntityToFlight(postflightEntity)
+
+        return &amp;postFlight, nil</span>
+}
+
+func (flightService *FlightService) DeleteByFlightCode(flightCode string) (bool, error) <span class="cov8" title="1">{
+        if !flightService.FlightExists(flightCode) </span><span class="cov8" title="1">{
+                return false, errors.NewFlightNotFoundError(flightCode, 404)
+        }</span>
+        <span class="cov8" title="1">return flightService.flightRepo.DeleteByFlightCode(flightCode), nil</span>
+}
+
+func (flightService *FlightService) Update(flight models.Flight) (*models.Flight, error) <span class="cov8" title="1">{
+        if !flightService.FlightExists(flight.FlightCode) </span><span class="cov8" title="1">{
+                return nil, errors.NewFlightNotFoundError(flight.FlightCode, 404)
+        }</span>
+
+        <span class="cov8" title="1">var flightEntity = flightService.flightConverter.ConvertFlightToFlightEntity(flight)
+        var putFlightEntity = flightService.flightRepo.Update(flightEntity)
+        var putUser = flightService.flightConverter.ConvertFlightEntityToFlight(putFlightEntity)
+
+        return &amp;putUser, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file12" style="display: none">package strategies
+
+import (
+        "flyhorizons-flightservice/models"
+        "time"
+)
+
+type ArrivalAirportStrategy struct{}
+
+func (strategy ArrivalAirportStrategy) Filter(flights []models.Flight, depatureAirport *string, arrivalAirport *string, departureDate *time.Time, returnDate *time.Time) []models.Flight <span class="cov0" title="0">{
+        var filteredFlights []models.Flight
+
+        if arrivalAirport != nil </span><span class="cov0" title="0">{
+                for _, flight := range flights </span><span class="cov0" title="0">{
+                        flightArrival := *arrivalAirport
+                        if flight.Arrival == flightArrival </span><span class="cov0" title="0">{
+                                filteredFlights = append(filteredFlights, flight)
+                        }</span>
+                }
+        }
+        <span class="cov0" title="0">return filteredFlights</span>
+}
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package strategies
+
+import (
+        "flyhorizons-flightservice/models"
+        "flyhorizons-flightservice/models/enums"
+        "flyhorizons-flightservice/utils"
+        "time"
+)
+
+type DateRangeStrategy struct {
+}
+
+func (strategy DateRangeStrategy) Filter(flights []models.Flight, depatureAirport *string, arrivalAirport *string, departureDate *time.Time, returnDate *time.Time) []models.Flight <span class="cov0" title="0">{
+        var filteredFlights []models.Flight
+        weekdayUtils := utils.WeekdayUtils{}
+
+        if departureDate != nil </span><span class="cov0" title="0">{
+                // Convert departureDate to Day enum
+                flightDepatureDate := *departureDate
+                departureWeekday := weekdayUtils.ConvertToWeekDay(flightDepatureDate)
+
+                // Convert arrivalDate to Day enum (if provided)
+                var arrivalWeekday *enums.Day
+
+                if returnDate != nil </span><span class="cov0" title="0">{
+                        tempArrivalDay := weekdayUtils.ConvertToWeekDay(*returnDate)
+                        arrivalWeekday = &amp;tempArrivalDay
+                }</span>
+
+                <span class="cov0" title="0">for _, flight := range flights </span><span class="cov0" title="0">{
+                        // Check if the flight departure day matches any of the flight allowed days
+                        if weekdayUtils.ContainsDay(flight.DepartureDays, departureWeekday) </span><span class="cov0" title="0">{
+                                // If arrivalDate is provided, ensure that the flight departure day matches with the arrival weekday
+                                if arrivalWeekday == nil || departureWeekday == *arrivalWeekday </span><span class="cov0" title="0">{
+                                        filteredFlights = append(filteredFlights, flight)
+                                }</span>
+                        }
+                }
+        }
+
+        <span class="cov0" title="0">return filteredFlights</span>
+}
+</pre>
+		
+		<pre class="file" id="file14" style="display: none">package strategies
+
+import (
+        "flyhorizons-flightservice/models"
+        "time"
+)
+
+type DepartureAirportStrategy struct{}
+
+func (strategy DepartureAirportStrategy) Filter(flights []models.Flight, depatureAirport *string, arrivalAirport *string, departureDate *time.Time, returnDate *time.Time) []models.Flight <span class="cov0" title="0">{
+        var filteredFlights []models.Flight
+
+        if depatureAirport != nil </span><span class="cov0" title="0">{
+                flightDeparture := *depatureAirport
+                for _, flight := range flights </span><span class="cov0" title="0">{
+                        if flight.Departure == flightDeparture </span><span class="cov0" title="0">{
+                                filteredFlights = append(filteredFlights, flight)
+                        }</span>
+                }
+        }
+        <span class="cov0" title="0">return filteredFlights</span>
+}
+</pre>
+		
+		<pre class="file" id="file15" style="display: none">package utils
+
+import (
+        "encoding/json"
+        "flyhorizons-flightservice/models/enums"
+        "time"
+)
+
+type WeekdayUtils struct{}
+
+func (utils WeekdayUtils) getDayOfWeek(date time.Time) string <span class="cov8" title="1">{
+        return date.Weekday().String()
+}</span>
+
+func (utils WeekdayUtils) convertToDay(day string) enums.Day <span class="cov8" title="1">{
+        switch day </span>{
+        case "Monday":<span class="cov0" title="0">
+                return enums.Monday</span>
+        case "Tuesday":<span class="cov0" title="0">
+                return enums.Tuesday</span>
+        case "Wednesday":<span class="cov0" title="0">
+                return enums.Wednesday</span>
+        case "Thursday":<span class="cov0" title="0">
+                return enums.Thursday</span>
+        case "Friday":<span class="cov8" title="1">
+                return enums.Friday</span>
+        case "Saturday":<span class="cov0" title="0">
+                return enums.Saturday</span>
+        case "Sunday":<span class="cov0" title="0">
+                return enums.Sunday</span>
+        default:<span class="cov0" title="0">
+                return 0</span> // Invalid day
+        }
+}
+
+func (utils WeekdayUtils) ConvertToWeekDay(date time.Time) enums.Day <span class="cov8" title="1">{
+        dayString := utils.getDayOfWeek(date)
+        return utils.convertToDay(dayString)
+}</span>
+
+func (utils WeekdayUtils) ContainsDay(days []enums.Day, targetDay enums.Day) bool <span class="cov8" title="1">{
+        for _, day := range days </span><span class="cov8" title="1">{
+                if enums.Day(day) == targetDay </span><span class="cov8" title="1">{
+                        return true
+                }</span>
+        }
+        <span class="cov8" title="1">return false</span>
+}
+
+func (utils WeekdayUtils) ConvertJSONToDays(jsonString string) ([]enums.Day, error) <span class="cov8" title="1">{
+        var dayInts []int
+        err := json.Unmarshal([]byte(jsonString), &amp;dayInts)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">days := make([]enums.Day, len(dayInts))
+        for i, dayInt := range dayInts </span><span class="cov8" title="1">{
+                days[i] = enums.Day(dayInt)
+        }</span>
+
+        <span class="cov8" title="1">return days, nil</span>
+}
+
+func (utils WeekdayUtils) ConvertDaysToJSON(days []enums.Day) (string, error) <span class="cov8" title="1">{
+        dayInts := make([]int, len(days))
+        for i, day := range days </span><span class="cov8" title="1">{
+                dayInts[i] = int(day)
+        }</span>
+
+        <span class="cov8" title="1">jsonBytes, err := json.Marshal(dayInts)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+
+        <span class="cov8" title="1">return string(jsonBytes), nil</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
